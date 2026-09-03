@@ -1,34 +1,91 @@
 # Full Stack Finance Tracker
 
-A complete starter finance tracker built with **Java Spring Boot**, **React.js**, **Firebase Authentication**, **REST APIs**, and **SQL**. It lets users record income and expenses, view totals, inspect category spending, and delete transactions.
+A full-stack personal finance application for recording income and expenses, reviewing balances, and understanding spending by category.
+
+## Why this project
+
+The project demonstrates how a modern frontend can communicate with a secured Java REST API backed by relational persistence. It also separates authentication concerns from application data and isolates transactions by authenticated user.
 
 ## Features
 
-- React dashboard with responsive cards, transaction form, category summary, and recent activity list.
-- Java Spring Boot REST API with CRUD endpoints for transactions.
-- Firebase Authentication support using Google sign-in and Firebase Admin token verification.
-- SQL persistence through Spring Data JPA. H2 is enabled for quick local demos, and PostgreSQL can be used in production.
-- Per-user transaction isolation through the authenticated Firebase user id.
+- Record, update, list, and delete income/expense transactions
+- Dashboard showing income, expenses, and balance
+- Category-based spending summary
+- Recent transaction activity
+- Firebase Authentication with Google sign-in
+- Backend token verification with Firebase Admin SDK
+- Per-user transaction isolation using the authenticated Firebase user ID
+- JPA-based relational persistence
+- H2 support for local development and PostgreSQL support for production
+- Responsive React frontend
 
-## Project structure
+## Tech Stack
+
+**Frontend**
+- React.js
+- Vite
+- Firebase Authentication
+
+**Backend**
+- Java 17
+- Spring Boot 3
+- Spring Web
+- Spring Security
+- Spring Data JPA
+- Firebase Admin SDK
+
+**Database**
+- H2
+- PostgreSQL
+
+## Architecture
 
 ```text
-backend/    Spring Boot API, Firebase security, JPA models, REST controllers
-frontend/   Vite React application and Firebase web client
-database/   SQL schema for PostgreSQL-compatible databases
+React + Firebase Auth
+        |
+        | Bearer token
+        v
+Spring Boot REST API
+        |
+        +--> Firebase token verification
+        |
+        +--> Transaction / Summary services
+        |
+        v
+Spring Data JPA
+        |
+        v
+H2 / PostgreSQL
 ```
 
-## API endpoints
+## REST API
 
-| Method | Endpoint | Description |
+| Method | Endpoint | Purpose |
 | --- | --- | --- |
-| GET | `/api/transactions` | List current user's transactions |
+| GET | `/api/transactions` | List transactions for the authenticated user |
 | GET | `/api/transactions/summary` | Return income, expenses, and balance |
 | POST | `/api/transactions` | Create a transaction |
 | PUT | `/api/transactions/{id}` | Update a transaction |
 | DELETE | `/api/transactions/{id}` | Delete a transaction |
 
-## Run locally
+## Project Structure
+
+```text
+backend/
+├── src/main/java/...
+├── src/main/resources/
+└── pom.xml
+
+frontend/
+├── src/
+├── public/
+└── package.json
+
+database/
+└── schema.sql
+```
+
+## Run Locally
 
 ### Backend
 
@@ -37,7 +94,7 @@ cd backend
 mvn spring-boot:run
 ```
 
-By default the API runs at `http://localhost:8080`, uses an in-memory H2 database, and runs in demo auth mode with user id `demo-user`.
+The default development configuration uses an in-memory H2 database and demo authentication mode. The API is available at `http://localhost:8080`.
 
 ### Frontend
 
@@ -47,47 +104,23 @@ npm install
 npm run dev
 ```
 
-The app runs at `http://localhost:5173` and calls `http://localhost:8080/api` by default.
+The Vite development server normally runs at `http://localhost:5173`.
 
-## Firebase setup
+## Firebase Configuration
 
-1. Create a Firebase project and enable Google Authentication.
-2. Add a web app and copy its config values into `frontend/.env.local`:
+For real Firebase authentication, create a Firebase project, enable Google Authentication, and provide the required frontend configuration through environment variables. Configure the backend with Firebase Admin credentials through environment variables or another secure secret-management mechanism.
 
-```env
-VITE_API_URL=http://localhost:8080/api
-VITE_FIREBASE_API_KEY=your-key
-VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_APP_ID=your-app-id
-```
+**Do not commit Firebase service-account JSON files, private keys, passwords, or other secrets to Git.**
 
-3. Create a Firebase service account JSON and provide it to the backend:
+## PostgreSQL Configuration
 
-```bash
-export FIREBASE_ENABLED=true
-export FIREBASE_SERVICE_ACCOUNT='{"type":"service_account", ... }'
-```
+The repository includes a PostgreSQL-compatible schema under `database/schema.sql`. Configure the application with the database URL, username, password, and driver through environment variables before running against PostgreSQL.
 
-If Firebase variables are omitted, the app still works in demo mode for local development.
-
-## PostgreSQL configuration
-
-Run `database/schema.sql` in your PostgreSQL database, then start the backend with:
-
-```bash
-export DATABASE_URL=jdbc:postgresql://localhost:5432/finance_tracker
-export DATABASE_USERNAME=postgres
-export DATABASE_PASSWORD=postgres
-export DATABASE_DRIVER=org.postgresql.Driver
-cd backend && mvn spring-boot:run
-```
-
-## Example transaction JSON
+## Example Request Body
 
 ```json
 {
-  "title": "Salary",
+  "title": "Monthly Salary",
   "category": "Work",
   "amount": 3500.00,
   "type": "INCOME",
@@ -95,3 +128,26 @@ cd backend && mvn spring-boot:run
   "notes": "Monthly paycheck"
 }
 ```
+
+## Key Engineering Concepts Demonstrated
+
+- RESTful API design
+- Authentication and authorization
+- User-scoped data access
+- Dependency injection with Spring Boot
+- JPA entity and repository patterns
+- Relational database persistence
+- Frontend/backend separation
+- Environment-based configuration
+
+## Future Improvements
+
+- Automated unit and integration tests
+- Production deployment with managed PostgreSQL
+- Budget limits and spending alerts
+- Pagination and advanced transaction filtering
+- CI/CD pipeline
+
+## License
+
+No license is currently specified for this repository.
