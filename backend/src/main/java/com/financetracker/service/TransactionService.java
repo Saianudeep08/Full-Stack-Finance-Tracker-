@@ -19,7 +19,8 @@ public class TransactionService {
 
     public List<Transaction> list(String userId, LocalDate start, LocalDate end) {
         if (start != null && end != null) {
-            return repository.findByUserIdAndTransactionDateBetweenOrderByTransactionDateDescIdDesc(userId, start, end);
+            return repository.findByUserIdAndTransactionDateBetweenOrderByTransactionDateDescIdDesc(
+                    userId, start, end);
         }
         return repository.findByUserIdOrderByTransactionDateDescIdDesc(userId);
     }
@@ -31,9 +32,7 @@ public class TransactionService {
     }
 
     public Transaction update(String userId, Long id, Transaction transaction) {
-        Transaction existing = repository.findById(id)
-                .filter(item -> item.getUserId().equals(userId))
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
+        Transaction existing = findOwnedTransaction(userId, id);
         existing.setTitle(transaction.getTitle());
         existing.setCategory(transaction.getCategory());
         existing.setAmount(transaction.getAmount());
@@ -44,22 +43,24 @@ public class TransactionService {
     }
 
     public void delete(String userId, Long id) {
-        Transaction existing = repository.findById(id)
-                .filter(item -> item.getUserId().equals(userId))
-                .orElseThrow(() -> new IllegalArgumentException("Transaction not found"));
-        repository.delete(existing);
+        repository.delete(findOwnedTransaction(userId, id));
     }
 
     public SummaryResponse summarize(String userId) {
-        BigDecimal income = BigDecimal.ZERO;
-        BigDecimal expenses = BigDecimal.ZERO;
-        for (Transaction transaction : repository.findByUserIdOrderByTransactionDateDescIdDesc(userId)) {
-            if (transaction.getType() == TransactionType.INCOME) {
-                income = income.add(transaction.getAmount());
-            } else {
-                expenses = expenses.add(transaction.getAmount());
-            }
-        }
+        BigDecimal income = repository.sumAmountByUserIdAndType(userId, TransactionType.INCOME);
+        BigDecimal expenses = repository.sumAmountByUserIdAndType(userId, TransactionType.EXPENSE);
         return new SummaryResponse(income, expenses, income.subtract(expenses));
+    }
+
+    private Transaction findOwnedTransaction(String userId, Long id) {
+        return repository.findById(id)
+                .filter(transaction -> userId.equals(transaction.getUserId()))
+                .orElseThrow(() -> new TransactionNotFoundException(id));
+    }
+
+    public static class TransactionNotFoundException extends RuntimeException {
+        public TransactionNotFoundException(Long id) {
+            super("Transaction not found: " + id);
+        }
     }
 }
